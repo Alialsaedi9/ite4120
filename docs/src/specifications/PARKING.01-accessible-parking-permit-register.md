@@ -33,8 +33,13 @@ A municipal officer creates a permit application, records an approval or rejecti
 
 ## Business tests
 
-1. **A parking permit can be issued for an approved application.**  
-   Given an application has an `APPROVED` decision, when the municipal officer issues a parking permit, then the permit is created with a unique permit number, validity period and status.
+1. **A parking permit can be issued for an approved application.**
 
-2. **A parking permit cannot be issued without an approved decision.**  
-   Given an application does not have an `APPROVED` decision, when the municipal officer tries to issue a parking permit, then the request is rejected and no parking permit is created.
+   Given a person has a permit application with an `APPROVED` decision  
+   When the municipal officer issues a parking permit for that person  
+   Then a parking permit is created for the person with a unique permit number, validity period, and status
+2. **A parking permit cannot be issued without an approved decision.**
+
+   Given a person has a permit application without an `APPROVED` decision  
+   When the municipal officer tries to issue a parking permit for that person  
+   Then the request is rejected and no parking permit is created
