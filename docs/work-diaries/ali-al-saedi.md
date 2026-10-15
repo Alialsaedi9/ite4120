@@ -40,3 +40,48 @@
 - Prepare the project specification.
 - Design the data model with at least three tables and a foreign-key relationship.
 - Define the first business tests using Given / When / Then.
+
+## 15.10.2026
+
+**Time spent:** approximately 2 hours
+
+### Activities
+- Continued development of the Accessible Parking Permit Register with the group.
+- Reviewed the parking permit specification and database schema.
+- Confirmed that the permit is linked to a person rather than to a specific vehicle.
+- Reviewed the three-table data model and the foreign-key relationships between permit applications, decisions, and issued permits.
+- Refined two business tests into clear Given / When / Then scenarios.
+- Defined the positive case where a permit can be issued after an `APPROVED` decision.
+- Defined the negative case where issuing a permit without an `APPROVED` decision must be rejected.
+- Added validation requirements for personal codes, decisions, permit numbers, and permit validity dates.
+- Added consistent REST API error-handling requirements using `400 Bad Request`, `404 Not Found`, and `409 Conflict`.
+- Coordinated the division of work with the group and helped establish shared GitHub repository access for group collaboration.
+
+### Decisions and reasoning
+- Kept the parking permit person-centric because the permit belongs to the person and is not tied to a specific vehicle.
+- Used `409 Conflict` when a request is structurally valid but conflicts with the current application state, such as attempting to issue a permit without an approved decision.
+- Kept the business tests in plain-language Given / When / Then format so they can later be converted into executable tests.
+
+### Problems and corrections
+- Initially inserted the validation section at the wrong position in the specification and accidentally replaced the document heading.
+- Detected the problem using `git diff` before committing.
+- Restored the file from Git and inserted the validation section again in the correct location.
+- Verified the changes before creating the commit.
+
+### AI assistance
+- Used ChatGPT to review the specification structure and discuss suitable validation and error-handling rules.
+- Used AI assistance to refine the business tests and explain the distinction between validation and REST API error handling.
+- Used AI assistance for Git commands and to diagnose and correct the misplaced specification section.
+- Reviewed and verified the suggested changes manually before committing them.
+
+### What I learned
+- Learned how business requirements can be expressed as Given / When / Then scenarios and later converted into automated tests.
+- Better understood the difference between input validation, business-rule validation, and REST API error responses.
+- Learned why `git diff` should be used to review changes before staging and committing them.
+- Improved my understanding of collaborative Git workflows and the importance of traceable individual commits.
+
+### Next steps
+- Review the group members' contributions and integrate them into the project.
+- Prepare the REST API/OpenAPI requirements and API surface for the parking component.
+- Convert the business tests into executable tests during the next development stage.
+- Verify the required X-Road integration approach for the project.

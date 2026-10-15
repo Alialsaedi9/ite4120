@@ -31,10 +31,32 @@ A municipal officer creates a permit application, records an approval or rejecti
 | | `valid_until` | date | required |
 | | `status` | varchar(20) | required |
 
+## Validation and error handling
+
+The system must validate all requests before storing or changing data.
+
+- `personal_code` is required and must contain exactly 11 digits.
+- A decision can only be recorded for an existing permit application.
+- `decision_type` must be either `APPROVED` or `REJECTED`.
+- A parking permit can only be issued when the related application has an `APPROVED` decision.
+- `permit_number` must be unique.
+- `valid_until` must not be earlier than `valid_from`.
+
+The REST API must return consistent error responses:
+
+- `400 Bad Request` when input data is missing or invalid.
+- `404 Not Found` when the requested permit application does not exist.
+- `409 Conflict` when the requested operation conflicts with the current state, for example when attempting to issue a parking permit without an `APPROVED` decision.
+
 ## Business tests
 
-1. **A parking permit can be issued for an approved application.**  
-   Given an application has an `APPROVED` decision, when the municipal officer issues a parking permit, then the permit is created with a unique permit number, validity period and status.
+1. **A parking permit can be issued for an approved application.**
 
-2. **A parking permit cannot be issued without an approved decision.**  
-   Given an application does not have an `APPROVED` decision, when the municipal officer tries to issue a parking permit, then the request is rejected and no parking permit is created.
+   Given a person has a permit application with an `APPROVED` decision  
+   When the municipal officer issues a parking permit for that person  
+   Then a parking permit is created for the person with a unique permit number, validity period, and status
+2. **A parking permit cannot be issued without an approved decision.**
+
+   Given a person has a permit application without an `APPROVED` decision  
+   When the municipal officer tries to issue a parking permit for that person  
+   Then the request is rejected and no parking permit is created
