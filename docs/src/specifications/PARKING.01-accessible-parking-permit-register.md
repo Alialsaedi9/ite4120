@@ -85,12 +85,23 @@ The UI shall respect the business rules already defined by the User Story and sp
 - The permit is linked to a person rather than to a specific vehicle.
 - Current personal information such as name and address is retrieved through the registry adapter when needed and is not stored locally by the Parking Register.
 
-### Open business questions
+### Agreed business flow and scope
 
-The following points require clarification before implementation:
+The application submission channel is outside the scope of the Parking Register. The system assumes that the municipality has already received the application through an external channel.
 
-- Define the allowed values and transitions for `permit_application.status`.
-- Define the allowed values and transitions for `parking_permit.status`.
+The agreed business flow is:
+
+Application received externally → Municipal officer creates the application → Officer records the decision → If the decision is `APPROVED`, the officer issues the parking permit.
+
+The delivery of the issued permit to the applicant, whether physical or digital, is outside the scope of the Parking Register.
+
+The following status transitions have been agreed:
+
+- `permit_application.status`: `RECEIVED` → `DECIDED`
+- The decision outcome is stored in `permit_decision.decision_type` as `APPROVED` or `REJECTED`.
+- `parking_permit.status`: `ACTIVE` → `EXPIRED` or `REVOKED`
+
+The parking permit is linked to a person, not to a specific vehicle.
 
 ## Relevant non-functional requirements
 
