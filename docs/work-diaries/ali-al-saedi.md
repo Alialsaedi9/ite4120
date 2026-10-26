@@ -152,3 +152,32 @@ I learned how a plain-language Given/When/Then business test can be converted in
 - Review the implementation and Git diff before committing.
 - Integrate the REST API/OpenAPI work with the business service when available.
 - Review and implement the second business test together with the group.
+### Second automated business test
+
+**Time spent:** approximately 1 hour
+
+#### Work completed
+
+- Converted the second plain-language business test into an executable integration test.
+- Implemented the negative scenario: a parking permit cannot be issued when the related application does not have an `APPROVED` decision.
+- Added a separate application creation method so an application can exist without automatically receiving an approved decision.
+- Verified that `ParkingService` rejects the permit issuance with a `ConflictException`.
+- Added a database check to verify that no parking permit is created when the request is rejected.
+- Followed the test-driven workflow: the test initially failed because the required `createApplication` method did not exist, then the implementation was added and the test reached GREEN.
+- Ran the complete Gradle test suite after the implementation and received `BUILD SUCCESSFUL`.
+
+#### Test-driven development result
+
+`Specification → Business Test → RED → Implementation → GREEN`
+
+The second automated business test now verifies both parts of the business rule: the request is rejected without an `APPROVED` decision, and no parking permit is stored in the database.
+
+#### What I learned
+
+I learned how to test a negative business scenario and how to verify not only that an exception is returned, but also that an invalid operation does not create data in the database.
+
+#### Next steps
+
+- Review and commit the second automated business test.
+- Review the REST API/OpenAPI contribution when it becomes available.
+- Participate in integration and final group testing.

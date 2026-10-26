@@ -88,4 +88,17 @@ public class ParkingRepository extends BaseRepository {
                 permitBp,
                 id);
     }
+
+    public int countPermitsForApplication(Long applicationId) {
+        Integer count = queryForObject(
+                """
+                select count(1)
+                  from parking.parking_permit
+                 where application_id = ?
+                """,
+                Integer.class,
+                applicationId);
+
+        return count == null ? 0 : count;
+    }
 }
