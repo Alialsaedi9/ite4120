@@ -14,7 +14,17 @@ public class ParkingService {
 
     public ParkingService(ParkingRepository repository) {
         this.repository = repository;
-    }
+}
+
+    @Transactional
+    public Long createApplication(
+            String personalCode,
+            LocalDate applicationDate) {
+
+        return repository.insertApplication(
+                personalCode,
+                applicationDate);
+       }
 
     @Transactional
     public Long createApprovedApplication(
@@ -52,4 +62,5 @@ public class ParkingService {
 
         return repository.loadPermit(permitId);
     }
+
 }
