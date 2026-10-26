@@ -122,3 +122,33 @@ I improved my understanding of separating system scope from external processes a
 - Convert one business test from the specification into an executable automated test.
 - Review the REST API / OpenAPI work when available.
 - Integrate and review the group members' contributions.
+### Automated business test implementation
+
+**Time spent:** approximately 1.5 hours
+
+#### Work completed
+
+- Converted the first plain-language business test into an executable integration test: `ParkingBusinessRulesIT`.
+- Implemented the positive scenario: a parking permit can be issued when the related application has an `APPROVED` decision.
+- Ran the test before implementing the parking backend and observed the expected RED stage because `ParkingService` and `ParkingPermit` did not yet exist.
+- Added the `ParkingPermit` model.
+- Added `ParkingRepository` using the existing project repository pattern and PostgreSQL schema.
+- Added `ParkingService` containing the business rule that a permit may only be issued when the application has an `APPROVED` decision.
+- Used Testcontainers with PostgreSQL so the business test runs against the actual Liquibase database schema.
+- Re-ran `ParkingBusinessRulesIT` after implementation and reached the GREEN stage with `BUILD SUCCESSFUL`.
+
+#### Test-driven development result
+
+`Specification → Business Test → RED → Implementation → GREEN`
+
+The automated test now verifies that an approved application can result in an `ACTIVE` parking permit with an ID, unique permit number, and validity period.
+
+#### What I learned
+
+I learned how a plain-language Given/When/Then business test can be converted into an executable integration test. I also learned the separation between the repository layer, which accesses the database, and the service layer, which enforces business rules.
+
+#### Next steps
+
+- Review the implementation and Git diff before committing.
+- Integrate the REST API/OpenAPI work with the business service when available.
+- Review and implement the second business test together with the group.
