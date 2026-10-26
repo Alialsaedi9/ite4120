@@ -85,3 +85,40 @@
 - Prepare the REST API/OpenAPI requirements and API surface for the parking component.
 - Convert the business tests into executable tests during the next development stage.
 - Verify the required X-Road integration approach for the project.
+
+## 26.10.2026
+
+**Time spent:** approximately 1 hour
+
+### Work completed
+
+- Reviewed the Accessible Parking Permit Register specification after the group discussion.
+- Documented the agreed business flow and clarified the project scope.
+- Agreed that the application submission channel is outside the scope of the Parking Register.
+- Agreed that permit delivery to the applicant is outside the scope of the Parking Register.
+- Defined `permit_application.status` transitions as `RECEIVED` → `DECIDED`.
+- Confirmed that the decision outcome is stored separately as `APPROVED` or `REJECTED`.
+- Defined `parking_permit.status` transitions as `ACTIVE` → `EXPIRED` or `REVOKED`.
+- Confirmed that the parking permit belongs to a person and is not linked to a specific vehicle.
+- Coordinated responsibilities within the group: Kadri focuses on REST API / OpenAPI, Arushi on UI and NFR review, and I focus on business rules, validation/error handling, and an automated business test.
+
+### Decisions
+
+- Keep the register focused on municipal processing rather than application submission or permit delivery.
+- Keep application processing status separate from the actual decision outcome.
+- Use explicit status transitions for applications and issued permits.
+- Continue using the person-centric permit model.
+
+### AI assistance
+
+AI assistance was used to review the agreed business flow, structure the specification changes, and check consistency with the existing business rules.
+
+### What I learned
+
+I improved my understanding of separating system scope from external processes and of modelling workflow status separately from business decisions.
+
+### Next steps
+
+- Convert one business test from the specification into an executable automated test.
+- Review the REST API / OpenAPI work when available.
+- Integrate and review the group members' contributions.
