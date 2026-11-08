@@ -48,6 +48,19 @@ The REST API must return consistent error responses:
 - `404 Not Found` when the requested permit application does not exist.
 - `409 Conflict` when the requested operation conflicts with the current state, for example when attempting to issue a parking permit without an `APPROVED` decision.
 
+## API
+
+| Method + path | Does | Failure answers |
+| --- | --- | --- |
+| `GET /api/permit-applications` | paged list; optional filters: `status`, `applicationDateFrom`, `applicationDateTo`; pagination: `limit`, `offset`; optional ordering: `sort` | 400 invalid filter or pagination value |
+| `POST /api/permit-applications` | create an application using `personal_code`, `application_date` and optional `reason`; answers **201 + Location** | 400 validation |
+| `GET /api/permit-applications/{id}` | retrieve an application's details, including its decision and any issued permit | 404 application not found |
+| `POST /api/permit-applications/{id}/decision` | record the application's single decision using `decision_date`, `decision_type` and optional `decision_reason`; answers **201 + Location** | 400 validation · 404 application not found · 409 decision already recorded |
+| `POST /api/permit-applications/{id}/permits` | issue a permit using `valid_from` and `valid_until`; the system generates the unique `permit_number`; answers **201 + Location** | 400 validation · 404 application not found · 409 application is not approved or already has a permit |
+| `GET /api/parking-permits/{id}` | retrieve one issued permit, including its permit number, validity period and status | 404 permit not found |
+
+Every error response uses `application/problem+json`.
+
 ## UI and business requirements
 
 ### UI requirements
