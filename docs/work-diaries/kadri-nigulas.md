@@ -78,3 +78,26 @@
 
 ### Next steps
 - 
+
+## 08.11.2026
+
+**Time spent:** approximately 2 hours
+
+### Activities
+- improving spec (data model)
+- wiritng initial API spec
+
+### Problems and corrections
+- found some problems with the data model and requirements when writing the API spec, corrected/sent corrections to teammate
+
+### AI assistance
+- answering questions and helping with the assignement and doing the changes
+- helping to validate the spec
+- writing API specs
+
+### What I learned
+- writing API spec with the help of AI
+
+### Next steps
+- specifing the requirements together with the team
+- specifing API spec
