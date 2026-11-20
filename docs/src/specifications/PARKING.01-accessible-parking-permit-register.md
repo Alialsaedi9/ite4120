@@ -1,6 +1,6 @@
 # PARKING.01 · Accessible Parking Permit Register
 
-> **PARKING.01** · state **Draft** · traces from [PARKING-US-001](../user-stories/PARKING-US-001.md)
+> **PARKING.01** · state **Confirmed** · traces from [PARKING-US-001](../user-stories/PARKING-US-001.md)
 
 ## Description
 
@@ -15,21 +15,21 @@ A municipal officer creates a permit application, records an approval or rejecti
 | Table | Field | Type | Rules |
 | --- | --- | --- | --- |
 | `parking.permit_application` | `id` | bigint | PK |
-| | `personal_code` | varchar(20) | required |
+| | `personal_code` | varchar(11) | required |
 | | `application_date` | date | required |
-| | `status` | varchar(30) | required |
+| | `status` | varchar(30) | required; system sets to `RECEIVED` on creation and `DECIDED` when the application's single decision is recorded |
 | | `reason` | varchar(500) | optional |
 | `parking.permit_decision` | `id` | bigint | PK |
-| | `application_id` | bigint | required; FK → `permit_application.id` |
+| | `application_id` | bigint | required; FK → `permit_application.id`; unique (one decision per application) |
 | | `decision_date` | date | required |
 | | `decision_type` | varchar(20) | required; `APPROVED` or `REJECTED` |
 | | `decision_reason` | varchar(500) | optional |
 | `parking.parking_permit` | `id` | bigint | PK |
-| | `application_id` | bigint | required; FK → `permit_application.id` |
+| | `application_id` | bigint | required; FK → `permit_application.id`; unique (one permit per application) |
 | | `permit_number` | varchar(50) | required; unique |
 | | `valid_from` | date | required |
 | | `valid_until` | date | required |
-| | `status` | varchar(20) | required |
+| | `status` | varchar(20) | required; set to `ACTIVE` on issuance |
 
 ## Validation and error handling
 
@@ -52,14 +52,38 @@ The REST API must return consistent error responses:
 
 | Method + path | Does | Failure answers |
 | --- | --- | --- |
-| `GET /api/permit-applications` | paged list; optional filters: `status`, `applicationDateFrom`, `applicationDateTo`; pagination: `limit`, `offset`; optional ordering: `sort` | 400 invalid filter or pagination value |
-| `POST /api/permit-applications` | create an application using `personal_code`, `application_date` and optional `reason`; answers **201 + Location** | 400 validation |
-| `GET /api/permit-applications/{id}` | retrieve an application's details, including its decision and any issued permit | 404 application not found |
-| `POST /api/permit-applications/{id}/decision` | record the application's single decision using `decision_date`, `decision_type` and optional `decision_reason`; answers **201 + Location** | 400 validation · 404 application not found · 409 decision already recorded |
-| `POST /api/permit-applications/{id}/permits` | issue a permit using `valid_from` and `valid_until`; the system generates the unique `permit_number`; answers **201 + Location** | 400 validation · 404 application not found · 409 application is not approved or already has a permit |
-| `GET /api/parking-permits/{id}` | retrieve one issued permit, including its permit number, validity period and status | 404 permit not found |
+| `GET /api/v1/permit-applications` | paged list; optional filters: `status`, `applicationDateFrom`, `applicationDateTo`; pagination and sorting as specified below; answers **200** | 400 invalid filter, pagination, or sort value |
+| `POST /api/v1/permit-applications` | create an application using `personal_code`, `application_date` and optional `reason`; answers **201 + Location** identifying the created application | 400 validation |
+| `GET /api/v1/permit-applications/{id}` | retrieve an application's details, including its decision and any issued permit | 404 application not found |
+| `POST /api/v1/permit-applications/{id}/decision` | record the application's single decision using `decision_date`, `decision_type` and optional `decision_reason`; answers **201 + Location** identifying the application's details | 400 validation · 404 application not found · 409 decision already recorded |
+| `POST /api/v1/permit-applications/{id}/permits` | issue a permit using `valid_from` and `valid_until`; the system generates the unique `permit_number`; answers **201 + Location** identifying the created permit | 400 validation · 404 application not found · 409 application is not approved or already has a permit |
+| `GET /api/v1/parking-permits/{id}` | retrieve one issued permit, including its permit number, validity period and status | 404 permit not found |
 
 Every error response uses `application/problem+json`.
+
+The API uses URL-path versioning; the current version is `/api/v1`.
+
+The application list response is an object containing a `data` array of application records and a `meta` object:
+
+```json
+{
+  "data": [],
+  "meta": {
+    "limit": 10,
+    "offset": 0,
+    "total": 0
+  }
+}
+```
+
+Each application record contains `id`, `personal_code`, `application_date`, and `status`, and includes `reason` when present. `meta.total` is the number of records matching the filters before pagination.
+
+- `limit` defaults to `10`; it must be an integer from `1` through `100`.
+- `offset` defaults to `0` and must be a non-negative integer.
+- `sort` accepts `applicationDate` or `status`; a field without a prefix sorts ascending, and prefixing it with `-` sorts descending. If omitted, results are ordered by `applicationDate` descending, then `id` ascending.
+- Invalid pagination or sort values return `400 Bad Request`.
+
+The decision endpoint does not expose a separate decision resource. Its `Location` header points to the existing application details resource, `GET /api/v1/permit-applications/{id}`.
 
 ## UI and business requirements
 
@@ -108,11 +132,13 @@ Application received externally → Municipal officer creates the application �
 
 The delivery of the issued permit to the applicant, whether physical or digital, is outside the scope of the Parking Register.
 
-The following status transitions have been agreed:
+The following status behavior is in scope:
 
 - `permit_application.status`: `RECEIVED` → `DECIDED`
 - The decision outcome is stored in `permit_decision.decision_type` as `APPROVED` or `REJECTED`.
-- `parking_permit.status`: `ACTIVE` → `EXPIRED` or `REVOKED`
+- `parking_permit.status` is set to `ACTIVE` when the permit is issued.
+
+Automatic expiry processing and permit revocation are out of scope. The permit's `valid_until` date is recorded, but this specification does not define transitions to `EXPIRED` or `REVOKED` or a revocation workflow.
 
 The parking permit is linked to a person, not to a specific vehicle.
 
@@ -120,7 +146,7 @@ The parking permit is linked to a person, not to a specific vehicle.
 
 The following TEHIK non-functional requirements are relevant to the Accessible Parking Permit Register:
 
-- **NFR-01 · API versioning:** The REST API shall support versioning in accordance with TEHIK requirement 3.3.
+- **NFR-01 · API versioning:** The REST API shall use URL-path versioning, with the current version at `/api/v1`, in accordance with TEHIK requirement 3.3.
 - **NFR-02 · Database migrations:** Database changes shall be automated and versioned using Liquibase, in accordance with TEHIK requirement 3.7.
 - **NFR-03 · Accessibility:** The web user interface shall comply with WCAG 2.2 Level AA, in accordance with TEHIK requirement 4.1.
 - **NFR-04 · Error handling:** User-facing errors shall be presented as clear, user-friendly error messages, in accordance with TEHIK requirement 4.6.
@@ -132,13 +158,50 @@ The following TEHIK non-functional requirements are relevant to the Accessible P
 
 ## Business tests
 
-1. **A parking permit can be issued for an approved application.**
+1. **An application can be created with a reason.**
+
+   Given an 11-digit personal identity code and application date  
+   When the municipal officer creates an application with a reason  
+   Then the application is stored with that reason and a `RECEIVED` status
+
+2. **An application can be created without a reason.**
+
+   Given an 11-digit personal identity code and application date  
+   When the municipal officer creates an application without a reason  
+   Then the application is stored without a reason and with a `RECEIVED` status
+
+3. **An application with an invalid personal code is rejected.**
+
+   Given a personal code that is not exactly 11 digits  
+   When the municipal officer creates an application  
+   Then the request is rejected with `400 Bad Request` and no application is stored
+
+4. **Recording a decision changes the application status.**
+
+   Given a permit application with a `RECEIVED` status  
+   When the municipal officer records an `APPROVED` decision  
+   Then the decision is stored and the application status becomes `DECIDED`
+
+5. **An application cannot receive a second decision.**
+
+   Given a permit application that already has a decision  
+   When the municipal officer attempts to record another decision  
+   Then the request is rejected with `409 Conflict` and the original decision remains unchanged
+
+6. **A parking permit can be issued for an approved application.**
 
    Given a person has a permit application with an `APPROVED` decision  
    When the municipal officer issues a parking permit for that person  
    Then a parking permit is created for the person with a unique permit number, validity period, and status
-2. **A parking permit cannot be issued without an approved decision.**
+
+7. **A parking permit cannot be issued without an approved decision.**
 
    Given a person has a permit application without an `APPROVED` decision  
    When the municipal officer tries to issue a parking permit for that person  
    Then the request is rejected and no parking permit is created
+
+8. **An application cannot receive a second parking permit.**
+
+   Given a permit application that already has a parking permit  
+   When the municipal officer attempts to issue another permit for that application  
+   Then the request is rejected with `409 Conflict` and the original permit remains unchanged

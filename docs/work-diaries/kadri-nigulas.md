@@ -101,3 +101,29 @@
 ### Next steps
 - specifing the requirements together with the team
 - specifing API spec
+
+## 20.11.2026
+
+**Time spent:** approximately 1.5 hours
+
+### Activities
+- Fetched and merged the team's updates from `upstream/main` into my parking-permit branch, then synced my branch to `origin`.
+- Reviewed feedback on PR #10 and clarified the API path and optional `reason` with the team.
+- Confirmed and updated the Parking Permit specification: application statuses, uniqueness rules, expiry and revocation scope, versioned API contract, pagination, sorting, and business tests.
+- Aligned the user story and business tests to require an 11-digit personal identity code.
+
+### Problems and corrections
+- Initially fetched from `origin` instead of the shared `upstream`; Git's ref-pruning prompt and branch-list output were confusing. Checked the remotes, fetched from `upstream` without pruning, and exited the pager.
+- Copilot's initial Git instructions were unclear and led to temporary missing-file indicators. Restored the files and verified the branch state.
+
+### AI assistance
+- Used Copilot to troubleshoot Git, review PR feedback, validate and update the specification, and align the user story and tests.
+
+### What I learned
+- `origin` is my fork and `upstream` is the shared team repository.
+- Fetching downloads remote updates; merging brings them into my branch.
+- API decisions and business tests should be agreed and specified before implementation.
+
+### Next steps
+- Ask the PR #10 author to align the endpoint with `/api/v1/permit-applications`, include optional `reason`, and update the tests.
+- Review the updated PR and turn the confirmed business tests into executable tests before implementing the remaining endpoints.
