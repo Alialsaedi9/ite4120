@@ -85,3 +85,99 @@
 - Prepare the REST API/OpenAPI requirements and API surface for the parking component.
 - Convert the business tests into executable tests during the next development stage.
 - Verify the required X-Road integration approach for the project.
+
+## 26.10.2026
+
+**Time spent:** approximately 1 hour
+
+### Work completed
+
+- Reviewed the Accessible Parking Permit Register specification after the group discussion.
+- Documented the agreed business flow and clarified the project scope.
+- Agreed that the application submission channel is outside the scope of the Parking Register.
+- Agreed that permit delivery to the applicant is outside the scope of the Parking Register.
+- Defined `permit_application.status` transitions as `RECEIVED` → `DECIDED`.
+- Confirmed that the decision outcome is stored separately as `APPROVED` or `REJECTED`.
+- Defined `parking_permit.status` transitions as `ACTIVE` → `EXPIRED` or `REVOKED`.
+- Confirmed that the parking permit belongs to a person and is not linked to a specific vehicle.
+- Coordinated responsibilities within the group: Kadri focuses on REST API / OpenAPI, Arushi on UI and NFR review, and I focus on business rules, validation/error handling, and an automated business test.
+
+### Decisions
+
+- Keep the register focused on municipal processing rather than application submission or permit delivery.
+- Keep application processing status separate from the actual decision outcome.
+- Use explicit status transitions for applications and issued permits.
+- Continue using the person-centric permit model.
+
+### AI assistance
+
+AI assistance was used to review the agreed business flow, structure the specification changes, and check consistency with the existing business rules.
+
+### What I learned
+
+I improved my understanding of separating system scope from external processes and of modelling workflow status separately from business decisions.
+
+### Next steps
+
+- Convert one business test from the specification into an executable automated test.
+- Review the REST API / OpenAPI work when available.
+- Integrate and review the group members' contributions.
+### Automated business test implementation
+
+**Time spent:** approximately 1.5 hours
+
+#### Work completed
+
+- Converted the first plain-language business test into an executable integration test: `ParkingBusinessRulesIT`.
+- Implemented the positive scenario: a parking permit can be issued when the related application has an `APPROVED` decision.
+- Ran the test before implementing the parking backend and observed the expected RED stage because `ParkingService` and `ParkingPermit` did not yet exist.
+- Added the `ParkingPermit` model.
+- Added `ParkingRepository` using the existing project repository pattern and PostgreSQL schema.
+- Added `ParkingService` containing the business rule that a permit may only be issued when the application has an `APPROVED` decision.
+- Used Testcontainers with PostgreSQL so the business test runs against the actual Liquibase database schema.
+- Re-ran `ParkingBusinessRulesIT` after implementation and reached the GREEN stage with `BUILD SUCCESSFUL`.
+
+#### Test-driven development result
+
+`Specification → Business Test → RED → Implementation → GREEN`
+
+The automated test now verifies that an approved application can result in an `ACTIVE` parking permit with an ID, unique permit number, and validity period.
+
+#### What I learned
+
+I learned how a plain-language Given/When/Then business test can be converted into an executable integration test. I also learned the separation between the repository layer, which accesses the database, and the service layer, which enforces business rules.
+
+#### Next steps
+
+- Review the implementation and Git diff before committing.
+- Integrate the REST API/OpenAPI work with the business service when available.
+- Review and implement the second business test together with the group.
+### Second automated business test
+
+**Time spent:** approximately 1 hour
+
+#### Work completed
+
+- Converted the second plain-language business test into an executable integration test.
+- Implemented the negative scenario: a parking permit cannot be issued when the related application does not have an `APPROVED` decision.
+- Added a separate application creation method so an application can exist without automatically receiving an approved decision.
+- Verified that `ParkingService` rejects the permit issuance with a `ConflictException`.
+- Added a database check to verify that no parking permit is created when the request is rejected.
+- Followed the test-driven workflow: the test initially failed because the required `createApplication` method did not exist, then the implementation was added and the test reached GREEN.
+- Ran the complete Gradle test suite after the implementation and received `BUILD SUCCESSFUL`.
+
+#### Test-driven development result
+
+`Specification → Business Test → RED → Implementation → GREEN`
+
+The second automated business test now verifies both parts of the business rule: the request is rejected without an `APPROVED` decision, and no parking permit is stored in the database.
+
+#### What I learned
+
+I learned how to test a negative business scenario and how to verify not only that an exception is returned, but also that an invalid operation does not create data in the database.
+
+#### Next steps
+
+- Review and commit the second automated business test.
+- Review the REST API/OpenAPI contribution when it becomes available.
+- Participate in integration and final group testing.
