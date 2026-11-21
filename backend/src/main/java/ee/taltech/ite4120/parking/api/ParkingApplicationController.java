@@ -14,7 +14,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/parking/applications")
+@RequestMapping("/api/v1/permit-applications")
 @Tag(
     name = "Parking",
     description = "Accessible parking permit applications"
@@ -34,13 +34,16 @@ public class ParkingApplicationController {
     public ResponseEntity<Void> create(
             @Valid @RequestBody ParkingApplicationRequest body) {
 
-        Long applicationId = service.createApplication(
-                body.getPersonalCode(),
-                body.getApplicationDate()
-        );
+
+Long applicationId = service.createApplication(
+        body.getPersonalCode(),
+        body.getApplicationDate(),
+        body.getReason()
+);
+
 
         return ResponseEntity
-                .created(URI.create("/api/parking/applications/" + applicationId))
+              .created(URI.create("/api/v1/permit-applications/" + applicationId))
                 .build();
     }
 }
