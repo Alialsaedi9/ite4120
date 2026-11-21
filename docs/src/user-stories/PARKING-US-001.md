@@ -14,7 +14,7 @@ An officer processes a permit application, records a decision and, when the appl
 
 ## Acceptance criteria
 
-- A permit application can be created using a valid personal identity code.
+- A permit application can be created using an 11-digit personal identity code.
 - The person's current identity information is retrieved from the Population Register through X-Road and is not stored locally.
 - An application can receive an approved or rejected decision.
 - A parking permit can be issued only when the application has an approved decision.
