@@ -95,6 +95,23 @@ void anInvalidPersonalCodeIsRejected() throws Exception {
         assertThat(repository.getApplicationReason(applicationId)).isEqualTo(reason);
     }
     @Test
+    void aNewParkingApplicationHasReceivedStatus() {
+        // Given an applicant provides the required application details
+        String personalCode = "39001010031";
+        LocalDate applicationDate = LocalDate.now();
+
+        // When a new parking permit application is created
+        Long applicationId = service.createApplication(
+                personalCode,
+                applicationDate);
+
+        // Then the application starts in RECEIVED status
+        assertThat(applicationId).isNotNull();
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("RECEIVED");
+    }
+
+    @Test
     void aParkingPermitCanBeIssuedForAnApprovedApplication() {
         // Given a person has a permit application with an APPROVED decision
         Long applicationId = service.createApprovedApplication(

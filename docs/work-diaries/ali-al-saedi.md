@@ -181,3 +181,33 @@ I learned how to test a negative business scenario and how to verify not only th
 - Review and commit the second automated business test.
 - Review the REST API/OpenAPI contribution when it becomes available.
 - Participate in integration and final group testing.
+
+### Parking database schema alignment
+
+**Time spent:** approximately 1 hour
+
+#### Work completed
+
+- Reviewed the parking database migrations against the confirmed Accessible Parking Permit Register specification.
+- Identified missing database constraints: application business status, one decision per application, and one permit per application.
+- Added a new Liquibase migration instead of modifying the already released migrations.
+- Added `status` to `permit_application` with default value `RECEIVED` and allowed values `RECEIVED` and `DECIDED`.
+- Added a unique constraint to ensure that an application can have only one decision.
+- Added a unique constraint to ensure that an application can have only one parking permit.
+- Added `getApplicationStatus` to `ParkingRepository`.
+- Added an automated business test verifying that a newly created application starts with `RECEIVED` status.
+- Ran the complete Gradle test suite after the changes and received `BUILD SUCCESSFUL`.
+
+#### Result
+
+The database schema is now better aligned with the confirmed specification, and the initial `RECEIVED` application status is verified by an automated integration test.
+
+#### What I learned
+
+I learned why released Liquibase changesets should remain immutable and why database changes should be introduced through a new migration. I also learned how database constraints can enforce business rules such as one decision and one permit per application.
+
+#### Next steps
+
+- Review the remaining REST API operations against the confirmed specification.
+- Integrate application decision handling with the `DECIDED` status transition.
+- Continue final integration and testing with the group.

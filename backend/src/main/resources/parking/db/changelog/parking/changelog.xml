@@ -13,5 +13,6 @@
     <include file="parking/db/changelog/parking/01-permit-application.sql"/>
     <include file="parking/db/changelog/parking/02-permit-decision.sql"/>
     <include file="parking/db/changelog/parking/03-parking-permit.sql"/>
+    <include file="parking/db/changelog/parking/04-parking-schema-alignment.sql"/>
 
 </databaseChangeLog>

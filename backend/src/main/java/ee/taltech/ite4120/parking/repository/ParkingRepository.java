@@ -51,6 +51,17 @@ public Long insertApplication(
     }
 
 
+    public String getApplicationStatus(Long applicationId) {
+        return queryForObject(
+                """
+                select status
+                  from parking.permit_application
+                 where id = ?
+                """,
+                String.class,
+                applicationId);
+    }
+
     public Long insertApprovedDecision(Long applicationId, LocalDate decisionDate) {
         String sql = """
                 insert into parking.permit_decision
