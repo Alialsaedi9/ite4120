@@ -16,15 +16,27 @@ public class ParkingService {
         this.repository = repository;
 }
 
-    @Transactional
-    public Long createApplication(
-            String personalCode,
-            LocalDate applicationDate) {
 
-        return repository.insertApplication(
-                personalCode,
-                applicationDate);
-       }
+@Transactional
+public Long createApplication(
+        String personalCode,
+        LocalDate applicationDate,
+        String reason) {
+
+    return repository.insertApplication(
+            personalCode,
+            applicationDate,
+            reason);
+}
+
+@Transactional
+public Long createApplication(
+        String personalCode,
+        LocalDate applicationDate) {
+
+    return createApplication(personalCode, applicationDate, null);
+}
+
 
     @Transactional
     public Long createApprovedApplication(

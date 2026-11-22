@@ -11,11 +11,15 @@ import org.helex.commons.exception.ConflictException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.testcontainers.service.connection.ServiceConnection;
 import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
+import org.springframework.test.web.servlet.MockMvc;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
  * Executable business tests for the Accessible Parking Permit Register.
@@ -24,6 +28,7 @@ import org.testcontainers.postgresql.PostgreSQLContainer;
  */
 @Testcontainers
 @SpringBootTest
+@AutoConfigureMockMvc
 @ActiveProfiles("test")
 class ParkingBusinessRulesIT {
 
@@ -37,7 +42,58 @@ class ParkingBusinessRulesIT {
 
     @Autowired
     ParkingRepository repository;
+    @Autowired
+MockMvc mockMvc;
+@Test
+void anInvalidPersonalCodeIsRejected() throws Exception {
+    // Given an applicant submits an invalid personal identity code
+    String requestBody = """
+            {
+                "personal_code": "123",
+                "application_date": "2026-11-21"
+            }
+            """;
 
+    // When the application is submitted through the API
+    // Then the API rejects it with HTTP 400 Bad Request
+    mockMvc.perform(post("/api/v1/permit-applications")
+            .header("Authorization", "Bearer superadmin")
+            .contentType("application/json")
+            .content(requestBody))
+            .andExpect(status().isBadRequest());
+}
+        @Test
+    void aParkingApplicationCanBeCreatedWithoutAReason() {
+        // Given an applicant provides the required details only
+        String personalCode = "39001010023";
+        LocalDate applicationDate = LocalDate.now();
+
+        // When the application is submitted without a reason
+        Long applicationId = service.createApplication(
+                personalCode,
+                applicationDate);
+
+        // Then an application is created
+        assertThat(applicationId).isNotNull();
+        assertThat(repository.getApplicationReason(applicationId)).isNull();
+    }
+    @Test
+    void aParkingApplicationCanBeCreatedWithAReason() {
+        // Given an applicant provides their details and a reason
+        String personalCode = "39001010015";
+        LocalDate applicationDate = LocalDate.now();
+        String reason = "Applicant requires accessible parking";
+
+        // When the application is submitted
+        Long applicationId = service.createApplication(
+                personalCode,
+                applicationDate,
+                reason);
+
+        // Then an application is created
+        assertThat(applicationId).isNotNull();
+        assertThat(repository.getApplicationReason(applicationId)).isEqualTo(reason);
+    }
     @Test
     void aParkingPermitCanBeIssuedForAnApprovedApplication() {
         // Given a person has a permit application with an APPROVED decision

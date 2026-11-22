@@ -12,20 +12,44 @@ public class ParkingRepository extends BaseRepository {
     private final PgBeanProcessor permitBp =
             new PgBeanProcessor(ParkingPermit.class);
 
-    public Long insertApplication(String personalCode, LocalDate applicationDate) {
-        String sql = """
-                insert into parking.permit_application
-                    (personal_code, application_date)
-                values (?, ?)
-                returning id
-                """;
 
+public Long insertApplication(
+        String personalCode,
+        LocalDate applicationDate,
+        String reason) {
+
+    String sql = """
+            insert into parking.permit_application
+                (personal_code, application_date, reason)
+            values (?, ?, ?)
+            returning id
+            """;
+
+    return queryForObject(
+            sql,
+            Long.class,
+            personalCode,
+            applicationDate,
+            reason);
+}
+
+public Long insertApplication(
+        String personalCode,
+        LocalDate applicationDate) {
+
+    return insertApplication(personalCode, applicationDate, null);
+}
+    public String getApplicationReason(Long applicationId) {
         return queryForObject(
-                sql,
-                Long.class,
-                personalCode,
-                applicationDate);
+                """
+                select reason
+                  from parking.permit_application
+                 where id = ?
+                """,
+                String.class,
+                applicationId);
     }
+
 
     public Long insertApprovedDecision(Long applicationId, LocalDate decisionDate) {
         String sql = """
