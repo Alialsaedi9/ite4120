@@ -1,13 +1,22 @@
 package ee.taltech.ite4120.parking.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.LocalDate;
 
 public class ParkingPermit {
 
     private Long id;
+
+    @JsonProperty("application_id")
     private Long applicationId;
+
+    @JsonProperty("permit_number")
     private String permitNumber;
+
+    @JsonProperty("valid_from")
     private LocalDate validFrom;
+
+    @JsonProperty("valid_until")
     private LocalDate validUntil;
     private String status;
 
