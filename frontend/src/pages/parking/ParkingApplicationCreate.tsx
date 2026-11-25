@@ -2,10 +2,12 @@
 import { AppCard, AppButtonPrimary, useAppNotification } from '@helex/ui';
 import { Form, Input, DatePicker } from 'antd';
 import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import type { Dayjs } from 'dayjs';
 
 export const ParkingApplicationCreate = () => {
   const notify = useAppNotification();
+  const navigate = useNavigate();
   const [saving, setSaving] = useState(false);
 
   const submit = async (values: {
@@ -40,6 +42,7 @@ export const ParkingApplicationCreate = () => {
         'Application created',
         'The parking permit application was saved.'
       );
+      navigate('/parking/applications');
     } catch (error) {
       notify.error(
         'Could not create application',
@@ -52,7 +55,7 @@ export const ParkingApplicationCreate = () => {
 
   return (
     <AppCard title="Create a parking permit application">
-      <p>Enter the applicant's details to create a new application.</p>
+      <p><Link to="/parking/applications">Back to applications</Link></p><p>Enter the applicant's details to create a new application.</p>
 
       <Form layout="vertical" onFinish={submit}>
         <Form.Item
