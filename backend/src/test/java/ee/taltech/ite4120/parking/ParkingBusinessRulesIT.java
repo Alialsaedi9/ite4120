@@ -7,7 +7,9 @@ import ee.taltech.ite4120.parking.model.ParkingPermit;
 import ee.taltech.ite4120.parking.repository.ParkingRepository;
 import ee.taltech.ite4120.parking.service.ParkingService;
 import java.time.LocalDate;
+import org.helex.commons.exception.ApiClientException;
 import org.helex.commons.exception.ConflictException;
+import org.helex.commons.exception.NotFoundException;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -19,6 +21,9 @@ import org.testcontainers.junit.jupiter.Testcontainers;
 import org.testcontainers.postgresql.PostgreSQLContainer;
 import org.springframework.test.web.servlet.MockMvc;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
@@ -153,5 +158,171 @@ void anInvalidPersonalCodeIsRejected() throws Exception {
 
         assertThat(repository.countPermitsForApplication(applicationId))
                 .isZero();
+    }
+
+    @Test
+    void anApplicationListIsPaged() throws Exception {
+        service.createApplication("39001010023", LocalDate.now(), "List test");
+
+        mockMvc.perform(get("/api/v1/permit-applications")
+                .header("Authorization", "Bearer superadmin")
+                .param("limit", "5")
+                .param("offset", "0"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.data").isArray())
+                .andExpect(jsonPath("$.meta.limit").value(5))
+                .andExpect(jsonPath("$.meta.offset").value(0))
+                .andExpect(jsonPath("$.meta.total").isNumber());
+    }
+
+    @Test
+    void anApplicationListRejectsInvalidPagination() throws Exception {
+        mockMvc.perform(get("/api/v1/permit-applications")
+                .header("Authorization", "Bearer superadmin")
+                .param("limit", "101")
+                .param("offset", "-1")
+                .param("sort", "invalid"))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void aParkingPermitCanBeIssuedWithAGeneratedNumber() {
+        Long applicationId = service.createApprovedApplication(
+                "39001010039",
+                LocalDate.now());
+
+        ParkingPermit permit = service.issuePermit(
+                applicationId,
+                LocalDate.now(),
+                LocalDate.now().plusYears(1));
+
+        assertThat(permit.getPermitNumber())
+                .matches("PARK-[A-Z0-9]{12}");
+    }
+
+    @Test
+    void aReversedPermitValidityPeriodIsRejected() {
+        Long applicationId = service.createApprovedApplication(
+                "39001010047",
+                LocalDate.now());
+
+        assertThatThrownBy(() -> service.issuePermit(
+                applicationId,
+                LocalDate.now().plusDays(1),
+                LocalDate.now()))
+                .isInstanceOf(ApiClientException.class);
+
+        assertThat(repository.countPermitsForApplication(applicationId)).isZero();
+    }
+
+    @Test
+    void anApplicationCannotReceiveASecondPermit() {
+        Long applicationId = service.createApprovedApplication(
+                "39001010055",
+                LocalDate.now());
+
+        service.issuePermit(
+                applicationId,
+                LocalDate.now(),
+                LocalDate.now().plusYears(1));
+
+        assertThatThrownBy(() -> service.issuePermit(
+                applicationId,
+                LocalDate.now(),
+                LocalDate.now().plusYears(1)))
+                .isInstanceOf(ConflictException.class);
+    }
+
+    @Test
+    void permitDetailsAreAvailableThroughTheService() {
+        Long applicationId = service.createApprovedApplication(
+                "39001010063",
+                LocalDate.now());
+        ParkingPermit issued = service.issuePermit(
+                applicationId,
+                LocalDate.now(),
+                LocalDate.now().plusYears(1));
+
+        assertThat(service.requirePermit(issued.getId()).getPermitNumber())
+                .isEqualTo(issued.getPermitNumber());
+    }
+
+    @Test
+    void aMissingPermitIsRejected() {
+        assertThatThrownBy(() -> service.requirePermit(999999999L))
+                .isInstanceOf(NotFoundException.class);
+    }
+
+    @Test
+    void permitEndpointRejectsAnApplicationWithoutApproval() throws Exception {
+        Long applicationId = service.createApplication(
+                "39001010071",
+                LocalDate.now());
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/permits")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content("""
+                        {
+                            "valid_from": "2026-11-23",
+                            "valid_until": "2027-11-23"
+                        }
+                        """))
+                .andExpect(status().isConflict())
+                .andExpect(jsonPath("$.title").value("Conflict with current state"));
+    }
+
+    @Test
+    void permitEndpointRejectsReversedValidityPeriod() throws Exception {
+        Long applicationId = service.createApprovedApplication(
+                "39001010089",
+                LocalDate.now());
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/permits")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content("""
+                        {
+                            "valid_from": "2026-11-24",
+                            "valid_until": "2026-11-23"
+                        }
+                        """))
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.title").value("Invalid request"));
+    }
+
+    @Test
+    void permitEndpointReturnsCreatedLocation() throws Exception {
+        Long applicationId = service.createApprovedApplication(
+                "39001010097",
+                LocalDate.now());
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/permits")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content("""
+                        {
+                            "valid_from": "2026-11-23",
+                            "valid_until": "2027-11-23"
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(header().exists("Location"));
+    }
+
+    @Test
+    void missingApplicationDetailsAreNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/permit-applications/999999999")
+                .header("Authorization", "Bearer superadmin"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Not found"));
+    }
+
+    @Test
+    void missingPermitDetailsAreNotFound() throws Exception {
+        mockMvc.perform(get("/api/v1/parking-permits/999999999")
+                .header("Authorization", "Bearer superadmin"))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.title").value("Not found"));
     }
 }

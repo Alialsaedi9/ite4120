@@ -127,3 +127,31 @@
 ### Next steps
 - Ask the PR #10 author to align the endpoint with `/api/v1/permit-applications`, include optional `reason`, and update the tests.
 - Review the updated PR and turn the confirmed business tests into executable tests before implementing the remaining endpoints.
+
+## 23.11.2026
+
+**Time spent:** approximately 4 hours
+
+### Activities
+- Implemented the remaining parking application list and details API operations.
+- Implemented parking permit creation and permit-details operations.
+- Added paged application responses with filtering, sorting, and pagination metadata.
+- Added generated permit numbers in the `PARK-` plus 12-character format.
+- Added permit validity and status validation at the service and database levels.
+- Added Swagger/OpenAPI annotations and `application/problem+json` handling.
+- Added focused parking permit integration tests and ran the complete backend Testcontainers suite.
+
+### Problems and corrections
+- A Windows build-directory lock caused repeated Gradle resource-cleanup failures; stopped the specific stale Java process and removed only generated build output before retrying.
+- Docker was initially unavailable, then restarted successfully and the parking Testcontainers suite passed.
+- The changeset checker reports violations in previously released parking changesets. I did not edit those files and instead added a new validation changeset.
+
+### AI assistance
+- Used Copilot to compare the implementation against the confirmed specification and course repository conventions.
+- Used AI help to design API DTOs, repository queries, service rules, tests, and verification commands.
+
+### What I learned
+- The confirmed list contract uses the parking specification's `limit`, `offset`, and `total` meta fields.
+- Permit creation must validate approved application state, duplicate permits, validity periods, and permit-number uniqueness.
+- Released Liquibase changesets must remain unchanged; new database constraints require an appended changeset.
+- Testcontainers verification is a stronger check than compilation alone because it tests the migrations and PostgreSQL behavior.

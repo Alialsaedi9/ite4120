@@ -26,7 +26,7 @@ A municipal officer creates a permit application, records an approval or rejecti
 | | `decision_reason` | varchar(500) | optional |
 | `parking.parking_permit` | `id` | bigint | PK |
 | | `application_id` | bigint | required; FK → `permit_application.id`; unique (one permit per application) |
-| | `permit_number` | varchar(50) | required; unique |
+| | `permit_number` | varchar(50) | required; unique; generated as `PARK-` plus 12 uppercase alphanumeric characters |
 | | `valid_from` | date | required |
 | | `valid_until` | date | required |
 | | `status` | varchar(20) | required; set to `ACTIVE` on issuance |
