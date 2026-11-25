@@ -211,3 +211,31 @@ I learned why released Liquibase changesets should remain immutable and why data
 - Review the remaining REST API operations against the confirmed specification.
 - Integrate application decision handling with the `DECIDED` status transition.
 - Continue final integration and testing with the group.
+
+### Parking application decision API
+
+**Date:** 25 November 2026
+
+#### Work completed
+
+- Implemented `POST /api/v1/permit-applications/{id}/decision` to record application decisions.
+- Added `ParkingDecisionRequest` with validation for the decision date and decision type.
+- Added repository support for storing `APPROVED` and `REJECTED` decisions, including the decision reason.
+- Added transactional service logic to validate applications, prevent duplicate decisions, and update the application status from `RECEIVED` to `DECIDED`.
+- Added API documentation for HTTP 201, 400, 404, and 409 responses.
+- Added three automated integration tests covering approved decisions, rejected decisions, and duplicate-decision conflicts.
+- Verified each new test individually using Gradle and PostgreSQL Testcontainers.
+- Ran the complete Gradle test suite and received `BUILD SUCCESSFUL`.
+
+#### Result
+
+The application decision API supports recording approval and rejection decisions, updates the application status, and prevents a second decision from replacing the original decision. All existing and new Gradle tests passed.
+
+#### What I learned
+
+I learned how to connect REST request validation, transactional business logic, and PostgreSQL persistence. I also learned how integration tests can verify HTTP responses, database changes, and conflict handling together.
+
+#### Next steps
+
+- Review the Git changes and create a pull request.
+- Complete integration checks with the group's remaining components.

@@ -325,4 +325,118 @@ void anInvalidPersonalCodeIsRejected() throws Exception {
                 .andExpect(status().isNotFound())
                 .andExpect(jsonPath("$.title").value("Not found"));
     }
+
+    @Test
+    void anApprovedDecisionChangesApplicationStatusToDecided() throws Exception {
+        // Given a newly received application
+        Long applicationId = service.createApplication(
+                "39001010015",
+                LocalDate.now(),
+                "Accessible parking required");
+
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("RECEIVED");
+
+        // When an officer approves the application through the API
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/decision")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content("""
+                        {
+                            "decision_date": "2026-11-25",
+                            "decision_type": "APPROVED",
+                            "decision_reason": "Eligibility requirements met"
+                        }
+                        """))
+                .andExpect(status().isCreated())
+                .andExpect(header().string(
+                        "Location",
+                        "/api/v1/permit-applications/" + applicationId));
+
+        // Then the decision is stored and the application is DECIDED
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("DECIDED");
+
+        assertThat(repository.loadDecision(applicationId).getDecisionType())
+                .isEqualTo("APPROVED");
+
+        assertThat(repository.loadDecision(applicationId).getDecisionReason())
+                .isEqualTo("Eligibility requirements met");
+    }
+
+
+    @Test
+    void aRejectedDecisionChangesApplicationStatusToDecided() throws Exception {
+        Long applicationId = service.createApplication(
+                "39001010023",
+                LocalDate.now(),
+                "Accessible parking requested");
+
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("RECEIVED");
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/decision")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content("""
+                        {
+                            "decision_date": "2026-11-25",
+                            "decision_type": "REJECTED",
+                            "decision_reason": "Eligibility requirements not met"
+                        }
+                        """))
+                .andExpect(status().isCreated());
+
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("DECIDED");
+
+        assertThat(repository.loadDecision(applicationId).getDecisionType())
+                .isEqualTo("REJECTED");
+
+        assertThat(repository.loadDecision(applicationId).getDecisionReason())
+                .isEqualTo("Eligibility requirements not met");
+    }
+
+
+    @Test
+    void aSecondDecisionForTheSameApplicationIsRejected() throws Exception {
+        Long applicationId = service.createApplication(
+                "39001010031",
+                LocalDate.now());
+
+        String approvedDecision = """
+                {
+                    "decision_date": "2026-11-25",
+                    "decision_type": "APPROVED",
+                    "decision_reason": "Eligibility confirmed"
+                }
+                """;
+
+        String rejectedDecision = """
+                {
+                    "decision_date": "2026-11-25",
+                    "decision_type": "REJECTED",
+                    "decision_reason": "Attempt to overwrite decision"
+                }
+                """;
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/decision")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content(approvedDecision))
+                .andExpect(status().isCreated());
+
+        mockMvc.perform(post("/api/v1/permit-applications/" + applicationId + "/decision")
+                .header("Authorization", "Bearer superadmin")
+                .contentType("application/json")
+                .content(rejectedDecision))
+                .andExpect(status().isConflict());
+
+        assertThat(repository.loadDecision(applicationId).getDecisionType())
+                .isEqualTo("APPROVED");
+
+        assertThat(repository.getApplicationStatus(applicationId))
+                .isEqualTo("DECIDED");
+    }
+
 }

@@ -90,6 +90,27 @@ public class ParkingApplicationController {
                 service.loadPermitForApplication(id));
     }
 
+    @Operation(summary = "Record a parking permit application decision")
+    @ApiResponse(responseCode = "201", description = "Decision recorded")
+    @ApiResponse(responseCode = "400", description = "Invalid decision data")
+    @ApiResponse(responseCode = "404", description = "Application not found")
+    @ApiResponse(responseCode = "409", description = "Application already has a decision")
+    @PostMapping("/{id}/decision")
+    public ResponseEntity<Void> recordDecision(
+            @PathVariable Long id,
+            @Valid @RequestBody ParkingDecisionRequest body) {
+
+        service.recordDecision(
+                id,
+                body.getDecisionDate(),
+                body.getDecisionType(),
+                body.getDecisionReason());
+
+        return ResponseEntity
+                .created(URI.create("/api/v1/permit-applications/" + id))
+                .build();
+    }
+
     @Operation(summary = "Issue a parking permit for an approved application")
     @ApiResponse(responseCode = "201", description = "Permit issued")
     @ApiResponse(responseCode = "400", description = "Invalid permit data")

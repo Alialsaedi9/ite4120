@@ -79,7 +79,47 @@ public Long createApplication(
             return application;
         }
 
-        public ParkingDecision loadDecision(Long applicationId) {
+        @Transactional
+    public Long recordDecision(
+            Long applicationId,
+            LocalDate decisionDate,
+            String decisionType,
+            String decisionReason) {
+
+        requireApplication(applicationId);
+
+        if (decisionDate == null) {
+            throw new ApiClientException("Decision date is required");
+        }
+
+        if (!"APPROVED".equals(decisionType)
+                && !"REJECTED".equals(decisionType)) {
+            throw new ApiClientException(
+                    "Decision type must be APPROVED or REJECTED");
+        }
+
+        if (repository.loadDecision(applicationId) != null) {
+            throw new ConflictException(
+                    "Application already has a decision");
+        }
+
+        try {
+            Long decisionId = repository.insertDecision(
+                    applicationId,
+                    decisionDate,
+                    decisionType,
+                    decisionReason);
+
+            repository.updateApplicationStatusToDecided(applicationId);
+
+            return decisionId;
+        } catch (DataIntegrityViolationException ex) {
+            throw new ConflictException(
+                    "Application already has a decision");
+        }
+    }
+
+    public ParkingDecision loadDecision(Long applicationId) {
             return repository.loadDecision(applicationId);
         }
 

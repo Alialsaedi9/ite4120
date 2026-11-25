@@ -170,6 +170,28 @@ public Long insertApplication(
                 applicationId);
     }
 
+    public Long insertDecision(
+            Long applicationId,
+            LocalDate decisionDate,
+            String decisionType,
+            String decisionReason) {
+
+        String sql = """
+                insert into parking.permit_decision
+                    (application_id, decision_date, decision_type, decision_reason)
+                values (?, ?, ?, ?)
+                returning id
+                """;
+
+        return queryForObject(
+                sql,
+                Long.class,
+                applicationId,
+                decisionDate,
+                decisionType,
+                decisionReason);
+    }
+
     public Long insertApprovedDecision(Long applicationId, LocalDate decisionDate) {
         String sql = """
                 insert into parking.permit_decision
